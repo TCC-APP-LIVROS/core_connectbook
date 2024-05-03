@@ -15,8 +15,8 @@ class Address(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20)
-    address = models.ForeignKey('Address', on_delete=models.CASCADE, related_name='profile_addresses')
     photo = models.ImageField(upload_to='profile_photos', blank=True, null=True)
+    email = models.EmailField(max_length=250, default="user@example.com")
 
     def __str__(self):
         return self.user.username

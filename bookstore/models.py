@@ -19,7 +19,7 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20)
     photo = models.ImageField(upload_to='profile_photos', blank=True, null=True)
     email = models.EmailField(max_length=250, default="user@example.com")
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    address = models.ForeignKey('UserAddress', on_delete=models.CASCADE, null=True, related_name='address_userprofile')
 
     def __str__(self):
         return self.user.username

@@ -2,7 +2,7 @@ name: Build and Deploy to GKE
 
 on:
   push:
-    branches: [ "homolog" ]
+    branches: [ "main" ]
 jobs:
   deploy:
     name: Setup Gcloud Account

@@ -11,7 +11,7 @@ class Address(models.Model):
     state = models.CharField(max_length=2, default='BA')
 
     def __str__(self):
-        return self.cep
+        return f"{self.public_place}, {self.neighborhood}, {self.city}, {self.state} - CEP: {self.cep}"
 
 
 class UserProfile(models.Model):
@@ -19,7 +19,7 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20)
     photo = models.ImageField(upload_to='profile_photos', blank=True, null=True)
     email = models.EmailField(max_length=250, default="user@example.com")
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    address = models.ForeignKey('UserAddress', on_delete=models.CASCADE, null=True, related_name='address_userprofile')
 
     def __str__(self):
         return self.user.username
@@ -33,7 +33,7 @@ class UserAddress(models.Model):
     nickname = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.address
+        return f"{self.address}, Number: {self.number}, Complement: {self.complement}, Nickname: {self.nickname}"
 
 
 class Product(models.Model):
@@ -41,7 +41,7 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     author = models.CharField(max_length=200, db_index=True)
     image = models.ImageField(upload_to='book/%Y/%m/%d', blank=True)
-    seller = models.ForeignKey(User, on_delete=models.CASCADE)
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales_user')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

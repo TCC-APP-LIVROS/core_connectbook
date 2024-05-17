@@ -87,11 +87,10 @@ DATABASES = {
     'default': {
 
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': '/cloudsql/connect-book-422901:us-central1:pools-instance',
-        'NAME': 'store_book_db',
-        'USER': 'postgres',
+        'HOST': '/cloudsql/connect-book-423523:us-central1:db-connect-book',
+        'NAME': 'book-store-db',
+        'USER': 'dba-user',
         'PASSWORD': '21436587',  # ou o endereço do seu servidor PostgreSQL
-        'PORT': '5432',  # ou a porta que o PostgreSQL está ouvindo
     }
 }
 

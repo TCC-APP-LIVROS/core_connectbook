@@ -87,7 +87,7 @@ DATABASES = {
     'default': {
 
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': '/cloudsql/connect-book-423523:us-central1:db-connect-book',
+        'HOST': '34.28.234.67',
         'NAME': 'book-store-db',
         'USER': 'dba-user',
         'PASSWORD': '21436587',  # ou o endereço do seu servidor PostgreSQL

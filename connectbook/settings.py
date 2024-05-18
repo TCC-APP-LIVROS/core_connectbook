@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bookstore.apps.BookstoreConfig',
+    'ads.apps.AdsConfig',
     'rest_framework',
     'django.contrib.postgres'
 ]
@@ -83,6 +84,17 @@ WSGI_APPLICATION = 'connectbook.wsgi.application'
         #'USER': 'postgres',
         #'PASSWORD': '21436587',
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'store_book',
+#         'USER': 'postgres',
+#         'PASSWORD': '1234',
+#         'HOST': 'localhost',  # ou o endereço do seu servidor PostgreSQL
+#         'PORT': '5432',  # ou a porta que o PostgreSQL está ouvindo
+#     }
+# }
+
 DATABASES = {
     'default': {
 
@@ -93,7 +105,6 @@ DATABASES = {
         'PASSWORD': '21436587',  # ou o endereço do seu servidor PostgreSQL
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

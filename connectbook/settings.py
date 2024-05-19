@@ -78,23 +78,6 @@ WSGI_APPLICATION = 'connectbook.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 
-#config banco na gcp
-        #'HOST': '/cloudsql/connect-book-422901:us-central1:pools-instance',
-        #'NAME': 'store_book_db',
-        #'USER': 'postgres',
-        #'PASSWORD': '21436587',
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'store_book',
-#         'USER': 'postgres',
-#         'PASSWORD': '1234',
-#         'HOST': 'localhost',  # ou o endereço do seu servidor PostgreSQL
-#         'PORT': '5432',  # ou a porta que o PostgreSQL está ouvindo
-#     }
-# }
-
 DATABASES = {
     'default': {
 

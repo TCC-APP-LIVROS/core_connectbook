@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Announcement, Question
+from .models import Product, Announcement
 
 # Register your models here.
 
@@ -14,9 +14,3 @@ class ProductAdmin(admin.ModelAdmin):
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ['title', 'study_area', 'condition', 'price', 'product']
     search_fields = ['title', 'study_area']  # Adicionado search_fields
-
-
-@admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin):
-    list_display = ['client', 'announcement', 'question_client', 'reply', 'created', 'active']
-    search_fields = ['client__username', 'announcement__title']  # Adicionado search_fields

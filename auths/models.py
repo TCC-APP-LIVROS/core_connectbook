@@ -34,4 +34,3 @@ class UserAddress(models.Model):
 
     def __str__(self):
         return f"{self.address}, Number: {self.number}, Complement: {self.complement}, Nickname: {self.nickname}"
-

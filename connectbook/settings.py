@@ -36,8 +36,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'bookstore.apps.BookstoreConfig',
+    'auths.apps.AuthsConfig',
     'ads.apps.AdsConfig',
+    'questions.apps.QuestionsConfig',
+    'review.apps.ReviewConfig',
+    'cartitem.apps.CartitemConfig',
+    'cart.apps.CartConfig',
     'rest_framework',
     'django.contrib.postgres'
 ]
@@ -79,14 +83,25 @@ WSGI_APPLICATION = 'connectbook.wsgi.application'
 
 DATABASES = {
     'default': {
-
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': '34.70.125.254',
-        'NAME': 'book-store-db',
-        'USER': 'dba-user',
-        'PASSWORD': '21436587',  # ou o endereço do seu servidor PostgreSQL
+        'NAME': 'store_book',
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',  # ou o endereço do seu servidor PostgreSQL
+        'PORT': '5432',  # ou a porta que o PostgreSQL está ouvindo
     }
 }
+
+# DATABASES = {
+#     'default': {
+#
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'HOST': '34.28.234.67',
+#         'NAME': 'book-store-db',
+#         'USER': 'dba-user',
+#         'PASSWORD': '21436587',  # ou o endereço do seu servidor PostgreSQL
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

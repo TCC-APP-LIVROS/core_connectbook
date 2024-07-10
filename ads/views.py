@@ -3,7 +3,11 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Product, Announcement
+from .models import Product, Announcement, MyImage
+from PIL import Image
+import os
+from django.conf import settings
+from datetime import date
 
 @csrf_exempt
 def create_product(request):
@@ -119,3 +123,24 @@ def edit_announcement(request, announcement_id):
             return JsonResponse({'error': str(e)}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    
+@csrf_exempt
+def upload_image(request):
+    if request.method == 'POST':
+        file = request.FILES.get('image')
+        img = MyImage(title=file.name, image=file)
+        img.save()
+        if file:
+            return JsonResponse({'message': 'Imagem recebida com sucesso!'}, status=201)
+        else:
+            return JsonResponse({'Error': 'Imagem não recebida'}, status=400)
+        
+@csrf_exempt
+def list_image(request):
+    if request.method == 'GET':
+        image = request.FILES.get('image')
+        if image:
+            return JsonResponse({'message': 'Imagem recebida com sucesso!'}, status=201)
+        else:
+            return JsonResponse({'Error': 'Imagem não recebida'}, status=400)

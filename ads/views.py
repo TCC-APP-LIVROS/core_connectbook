@@ -7,7 +7,7 @@ from .models import Product, Announcement, MyImage
 from PIL import Image
 import os
 from django.conf import settings
-from datetime import date
+from datetime import datetime
 
 @csrf_exempt
 def create_product(request):
@@ -129,9 +129,10 @@ def edit_announcement(request, announcement_id):
 def upload_image(request):
     if request.method == 'POST':
         file = request.FILES.get('image')
-        img = MyImage(title=file.name, image=file)
-        img.save()
+    
         if file:
+            img = MyImage(title=file.name, image=file)
+            img.save()
             return JsonResponse({'message': 'Imagem recebida com sucesso!'}, status=201)
         else:
             return JsonResponse({'Error': 'Imagem não recebida'}, status=400)

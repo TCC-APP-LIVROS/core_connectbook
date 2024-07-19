@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-
+from datetime import datetime
 
 class Product(models.Model):
     name = models.CharField(max_length=200, db_index=True)
@@ -17,11 +17,15 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
-    
-    
+
+
+def custom_uri( instance, filename):
+    date = datetime.now().strftime("%d-%m-%Y-%H:%M:%S")
+    filename = instance.title.split('.')[0]
+    return f'bookstore/products/images/{filename}-{date}.png'
 class MyImage(models.Model):
-    title = models.CharField(max_length=20)
-    image = models.ImageField(upload_to='book/')
+    title = models.CharField(max_length=200)
+    image = models.ImageField(upload_to=custom_uri)
 
     def __str__(self) -> str:
         return self.title

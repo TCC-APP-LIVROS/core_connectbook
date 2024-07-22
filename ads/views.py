@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import Product, Announcement
+from questions.models import Question
 
 @csrf_exempt
 def create_product(request):

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Announcement
+from .models import Product, Announcement, MyImage
 
 # Register your models here.
 
@@ -14,3 +14,7 @@ class ProductAdmin(admin.ModelAdmin):
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ['title', 'study_area', 'condition', 'price', 'product']
     search_fields = ['title', 'study_area']  # Adicionado search_fields
+
+@admin.register(MyImage)
+class MyIMage(admin.ModelAdmin):
+    list_display = ['title', 'image']

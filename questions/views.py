@@ -46,3 +46,26 @@ def create_question(request):
             return JsonResponse({'error': 'Missing required fields'}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def delete_question(request):
+    if request.method == 'DELETE':
+        data = json.loads(request.body)
+        question_id = data.get('question_id')
+
+        try:
+            if not question_id:
+                return JsonResponse({'erro': 'Question ID is required'}, status=400)
+
+            question = Question.objects.get(pk=question_id)
+
+            question.delete()
+
+            return JsonResponse({'message': 'Question deleted successfully'})
+        except Question.DoesNotExist:
+            return JsonResponse({'error': 'Question does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -48,3 +48,26 @@ def create_review(request):
             return JsonResponse({'error': 'Missing required fields'}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def delete_review(request):
+    if request.method == 'DELETE':
+        data = json.loads(request.body)
+        review_id = data.get('review_id')
+
+        try:
+            if not review_id:
+                return JsonResponse({'erro': 'Review ID is required'}, status=400)
+
+            review = Review.objects.get(pk=review_id)
+
+            review.delete()
+
+            return JsonResponse({'message': 'Review deleted successfully'})
+        except Review.DoesNotExist:
+            return JsonResponse({'error': 'Review does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)

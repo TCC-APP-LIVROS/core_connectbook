@@ -1,5 +1,5 @@
 from django.urls import path
-from views import list_reviews, create_review, delete_review
+from .views import list_reviews, create_review, delete_review
 
 urlpatterns = [
     path('list/', list_reviews, name='list_reviews'),

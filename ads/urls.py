@@ -6,11 +6,11 @@ urlpatterns = [
     path('product/edit/', edit_product, name='edit_product'),
     path('product/delete/', delete_product, name='delete_product'),
     path('product/<int:product_id>/', product_detail, name='product_detail'),
-    path('product/list/', list_product, name='list_product'),
+    path('product/list/<int:page>/', list_product, name='list_product'),
     path('announcement/create/', create_announcement, name='create_announcement'),
     path('announcement/edit/', edit_announcement, name='edit_announcement'),
     path('announcement/<int:id>/', announcement_detail, name='announcement_detail'),
-    path('announcement/list/', list_announcement, name='list_announcement'),
+    path('announcement/list/<int:page>/', list_announcement, name='list_announcement'),
 
 
 ]

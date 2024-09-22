@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.paginator import Paginator
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -131,10 +132,17 @@ def product_detail(request, product_id):
 
 
 @csrf_exempt
-def list_product(request):
+def list_product(request, page):
     if request.method == 'GET':
+
+        if not page:
+                return JsonResponse({'error': 'Page is required'}, status=400)
+
         product = Product.objects.all().values()
-        return JsonResponse(list(product), safe=False)
+        itens_per_page = 10
+        paginator = Paginator(product, itens_per_page)
+
+        return JsonResponse(list(paginator.get_page(page)), safe=False)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -249,9 +257,15 @@ def announcement_detail(request, announcement_id):
 
 
 @csrf_exempt
-def list_announcement(request):
+def list_announcement(request, page):
     if request.method == 'GET':
+        if not page:
+                return JsonResponse({'error': 'Page is required'}, status=400)
+
         announcement = Announcement.objects.all().values()
-        return JsonResponse(list(announcement), safe=False)
+        itens_per_page = 10
+        paginator = Paginator(announcement, itens_per_page)
+        
+        return JsonResponse(list(paginator.get_page(page)), safe=False)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -41,19 +41,6 @@ def user_login(request):
         else:
             return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-
-@csrf_exempt
-def user_logout(request):
-    if request.method == 'POST':
-        if request.user.is_authenticated:
-            logout(request)
-            return JsonResponse({'message': 'Logged out successfully'})
-        else:
-            return JsonResponse({'error': 'User is not authenticated'}, status=401)
-    else:
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-
 @csrf_exempt
 def profile_register(request):
     if request.method == 'POST':

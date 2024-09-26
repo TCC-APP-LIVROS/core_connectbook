@@ -47,7 +47,6 @@ def user_login(request):
         else:
             return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-
 @csrf_exempt
 def profile_register(request):
     if request.method == 'POST':

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+import uuid
 
 
 class Address(models.Model):
@@ -15,6 +16,7 @@ class Address(models.Model):
 
 
 class UserProfile(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20)
     photo = models.ImageField(upload_to='profile_photos', blank=True, null=True)

@@ -133,7 +133,6 @@ def list_product(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-
 @csrf_exempt
 def create_announcement(request):
     if request.method == 'POST':
@@ -187,7 +186,6 @@ def edit_announcement(request, announcement_id):
         title = data.get('title')
         price = data.get('price')
         status = data.get('status')
-        remove_announcement = data.get('remove_announcement')
 
         try:
             announcement = Announcement.objects.get(pk=announcement_id)
@@ -200,11 +198,6 @@ def edit_announcement(request, announcement_id):
             if status is not None:
                 announcement.status = status
 
-            # Remover o anúncio, se solicitado
-            if remove_announcement:
-                announcement.delete()
-                return JsonResponse({'message': 'Announcement removed successfully'})
-
             announcement.save()
             return JsonResponse({'message': 'Announcement updated successfully'})
         except Announcement.DoesNotExist:
@@ -213,6 +206,29 @@ def edit_announcement(request, announcement_id):
             return JsonResponse({'error': str(e)}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def delete_announcement(request):
+    if request.method == 'DELETE':
+        data = json.loads(request.body)
+        announcement_id = data.get('announcement_id')
+
+        try:
+            if not announcement_id:
+                return JsonResponse({'erro': 'Announcement ID is required'}, status=400)
+
+            announcement = Announcement.objects.get(pk=announcement_id)
+
+            announcement.delete()
+
+            return JsonResponse({'message': 'Announcement deleted successfully'})
+        except Product.DoesNotExist:
+            return JsonResponse({'error': 'Announcement does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
 
 
 @csrf_exempt
@@ -249,5 +265,35 @@ def list_announcement(request):
     if request.method == 'GET':
         announcement = Announcement.objects.all().values()
         return JsonResponse(list(announcement), safe=False)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def search_annoucement(request):
+    if request.method == 'GET':
+        data = json.loads(request.body)
+        title = data.get('title')
+
+        try:
+            if title:
+                announcements = Announcement.objects.filter(title=title)
+
+            if announcements.exists():
+                announcement_data = [{
+                    'id': announcements.id,
+                    'title': announcements.title,
+                    'study_area': announcements.study_area,
+                    'condition': announcements.condition,
+                    'price': announcements.price,
+                    'product_id': announcements.product_id,
+                    'question_id': announcements.question_id,
+                    'status': announcements.status
+                } for announcement in announcements]
+
+                return JsonResponse({'annoucement': announcement_data})
+        except Announcement.DoesNotExist:
+            return JsonResponse({'error': 'Announcement does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -11,7 +11,6 @@ urlpatterns = [
     path('announcement/edit/', edit_announcement, name='edit_announcement'),
     path('announcement/delete/', delete_announcement, name='delete_announcement'),
     path('announcement/<int:id>/', announcement_detail, name='announcement_detail'),
-    path('announcement/list/', list_announcement, name='list_announcement'),
     path('announcement/search/', search_annoucement, name='search_annoucement'),
     path('announcement/list/<int:page>/', list_announcement, name='list_announcement'),
 ]

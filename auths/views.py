@@ -87,24 +87,11 @@ def address_register(request):
         data = json.loads(request.body)
         cep = data.get('cep')
 
-        # Verificar se os campos essenciais estão presentes no payload
-        if 'public_place' in data:
-            public_place = data.get('public_place')
-        else:
-            return JsonResponse({'error': 'Missing public_place field'}, status=400)
-
-        if 'public_place_type' in data:
-            public_place_type = data.get('public_place_type')
-        else:
-            public_place_type = 'default_type'
-
         if Address.objects.filter(cep=cep).exists():
             address_existing = Address.objects.get(cep=cep)
             address_data = {
                 'cep': address_existing.cep,
                 'neighborhood': address_existing.neighborhood,
-                'public_place': public_place,
-                'public_place_type': public_place_type,
                 'city': address_existing.city,
                 'state': address_existing.state
             }
@@ -112,8 +99,6 @@ def address_register(request):
             add_address = Address.objects.create(
                 cep=cep,
                 neighborhood=address_existing.neighborhood,
-                public_place=public_place,
-                public_place_type=public_place_type,
                 city=address_existing.city,
                 state=address_existing.state
             )
@@ -135,8 +120,6 @@ def address_register(request):
                         new_address = Address.objects.create(
                             cep=cep,
                             neighborhood=neighborhood,
-                            public_place=public_place,
-                            public_place_type=public_place_type,
                             city=city,
                             state=state
                         )
@@ -150,6 +133,44 @@ def address_register(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+def get_Address_by_cep(cep):
+    try:
+        address_db = Address.objects.filter(cep=cep)
+        if address_db.exists():
+            return address_db.first()
+        else:
+            # Consultar a API ViaCEP para obter detalhes do endereço
+            via_cep_url = f'https://viacep.com.br/ws/{cep}/json/'
+            response = requests.get(via_cep_url)
+            if response.status_code == 200:
+                via_cep_data = response.json()
+
+                # Preencher automaticamente os campos de bairro, cidade e estado
+                neighborhood = via_cep_data.get('bairro', '')
+                city = via_cep_data.get('localidade', '')
+                state = via_cep_data.get('uf', '')
+                
+                # Criar o novo endereço com os dados fornecidos e preenchidos automaticamente
+                new_address = {
+                    'cep': cep,
+                    'neighborhood': neighborhood,
+                    'city': city,
+                    'state': state,
+                }
+
+                #Se não existe, cria o endereço no DB
+                address = Address.objects.create(
+                        cep=new_address['cep'],
+                        neighborhood=new_address['neighborhood'],
+                        city=new_address['city'],
+                        state=new_address['state']
+                )
+                return address
+            else:
+                return JsonResponse({'error': 'Failed to fetch address details from ViaCEP'}, status=400)
+    except Exception as e:
+                    print(e)
+                    return JsonResponse({'error': str(e)}, status=400)
 
 @csrf_exempt
 def user_address_register(request):
@@ -160,6 +181,7 @@ def user_address_register(request):
         number = address_data.get('number')
         complement = address_data.get('complement')
         nickname = address_data.get('nickname')
+        receiver_name = address_data.get('receiver_name')
 
         if user_id and address_data and complement and nickname:
             try:
@@ -167,25 +189,16 @@ def user_address_register(request):
 
                 # Verificar se o CEP existe no banco de dados
                 cep = address_data.get('cep')
-                address = Address.objects.filter(cep=cep).first()
-                if address is None:
-                    # Caso o CEP não exista, criar o endereço do usuário
-                    address = Address.objects.create(
-                        cep=cep,
-                        public_place=address_data.get('public_place'),
-                        public_place_type=address_data.get('public_place_type'),
-                        neighborhood='',  # Este campo será preenchido automaticamente com base no CEP
-                        city='',           # Este campo será preenchido automaticamente com base no CEP
-                        state=''           # Este campo será preenchido automaticamente com base no CEP
-                    )
-
+                address = get_Address_by_cep(cep)
+                
                 # Vincular o endereço ao usuário
-                user_address = UserAddress.objects.create(
+                UserAddress.objects.create(
                     user=user,
                     address=address,
                     number=number,
                     complement=complement,
-                    nickname=nickname
+                    nickname=nickname,
+                    receiver_name=receiver_name
                 )
 
                 return JsonResponse({'message': 'User address registered successfully'})
@@ -267,8 +280,3 @@ def list_auths(request):
         return JsonResponse(list(user), safe=False)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-
-
-
-

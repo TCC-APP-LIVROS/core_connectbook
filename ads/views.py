@@ -281,9 +281,15 @@ def list_announcement(request, page):
     if request.method == 'GET':
         if not page:
                 return JsonResponse({'error': 'Page is required'}, status=400)
+        
+        user_id = request.GET.get('user')
+        itens_per_page = 10 # passar na req.
 
-        announcement = Announcement.objects.all().values()
-        itens_per_page = 10
+        if not user_id:
+            announcement = Announcement.objects.all().values()
+        else:
+            announcement = Announcement.objects.filter(seller_id=user_id).values()
+        
         paginator = Paginator(announcement, itens_per_page)
         
         return JsonResponse(list(paginator.get_page(page)), safe=False)
@@ -329,10 +335,10 @@ def announcement_toggle_status(request, announcement_id):
 
             announcement = Announcement.objects.get(pk=announcement_id)
             
-            if announcement.status == 'disable':
+            if announcement.status == 'disabled':
                 announcement.status = 'activated'
             else:
-                announcement.status = 'disable'
+                announcement.status = 'disabled'
             
             announcement.save()
 

@@ -152,23 +152,22 @@ def create_announcement(request):
         data = json.loads(request.body)
         title = data.get('title')
         description = data.get('description')
-        study_area = data.get('study_area')
         condition = data.get('condition')
         price = data.get('price')
         product_id = data.get('product_id')
         seller = data.get('seller_id')
         status = data.get('status', 'disable')
 
-        if title and study_area and condition and price and product_id:
+        if title and condition and price and product_id:
             try:
                 # Verificar se o produto associado existe
                 product = Product.objects.get(pk=product_id)
+                seller = User.objects.get(pk=seller)
 
                 # Criar o anúncio
                 announcement = Announcement.objects.create(
                     title=title,
                     description=description,
-                    study_area=study_area,
                     condition=condition,
                     price=price,
                     product=product,
@@ -249,17 +248,22 @@ def announcement_detail(request, announcement_id):
             if not announcement_id:
                 return JsonResponse({'error': 'Announcement ID is required'}, status=400)
 
-            announcement = Product.objects.get(pk=announcement_id)
-
+            announcement = Announcement.objects.get(pk=announcement_id)
+            print(announcement)
             announcement_data = {
                 'id': announcement_id,
                 'title': announcement.title,
                 'description': announcement.description,
-                'study_area': announcement.study_area,
                 'condition': announcement.condition,
                 'price': announcement.price,
-                'product_id': announcement.product_id,
-                'seller_id': announcement.seller_id,
+                'product': {
+                    'id': announcement.product.id,
+                    'name': announcement.product.name,
+                    'study_area': announcement.product.study_area,
+                    'published_at': announcement.product.published_at,
+                    'author': announcement.product.author,
+                    'image': announcement.product.image.url if announcement.product.image else None,
+                },
                 'status': announcement.status
             }
 
@@ -277,9 +281,15 @@ def list_announcement(request, page):
     if request.method == 'GET':
         if not page:
                 return JsonResponse({'error': 'Page is required'}, status=400)
+        
+        user_id = request.GET.get('user')
+        itens_per_page = 10 # passar na req.
 
-        announcement = Announcement.objects.all().values()
-        itens_per_page = 10
+        if not user_id:
+            announcement = Announcement.objects.all().values()
+        else:
+            announcement = Announcement.objects.filter(seller_id=user_id).values()
+        
         paginator = Paginator(announcement, itens_per_page)
         
         return JsonResponse(list(paginator.get_page(page)), safe=False)
@@ -315,3 +325,28 @@ def search_annoucement(request):
             return JsonResponse({'error': str(e)}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def announcement_toggle_status(request, announcement_id):
+    if request.method == 'PUT':
+        try:
+            if not announcement_id:
+                return JsonResponse({'error': 'Announcement ID is required'}, status=400)
+
+            announcement = Announcement.objects.get(pk=announcement_id)
+            
+            if announcement.status == 'disabled':
+                announcement.status = 'activated'
+            else:
+                announcement.status = 'disabled'
+            
+            announcement.save()
+
+            return JsonResponse({'message': 'Announcement {announcement.status} successfully'})
+        except Announcement.DoesNotExist:
+            return JsonResponse({'error': 'Announcement does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+

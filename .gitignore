@@ -15,4 +15,11 @@ db.sqlite3
 /cartitem/__pycache__
 /cartitem/migrations/__pycache__
 
-/connectbook/__pycache__
+/review/__pycache__
+/review/migrations/__pycache__
+
+/questions/__pycache__
+/questions/migrations/__pycache__
+
+/connectbook\__pycache__
+

@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+
+from django.views.decorators.http import condition
+
 from .models import Product, Announcement
 from questions.models import Question
 
@@ -273,10 +276,16 @@ def search_annoucement(request):
     if request.method == 'GET':
         data = json.loads(request.body)
         title = data.get('title')
+        study_area = data.get('study_area')
+        condition = data.get('condition')
 
         try:
             if title:
                 announcements = Announcement.objects.filter(title=title)
+            if study_area:
+                announcements = Announcement.objects.filter(study_area=study_area)
+            if condition:
+                announcements = Announcement.objects.filter(condition=condition)
 
             if announcements.exists():
                 announcement_data = [{
@@ -291,6 +300,8 @@ def search_annoucement(request):
                 } for announcement in announcements]
 
                 return JsonResponse({'annoucement': announcement_data})
+            else:
+                return JsonResponse({'message': 'No annoucements found'}, status=404)
         except Announcement.DoesNotExist:
             return JsonResponse({'error': 'Announcement does not exist'}, status=404)
         except Exception as e:

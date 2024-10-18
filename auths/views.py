@@ -254,6 +254,25 @@ def user_address_update(request, id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @csrf_exempt
+def user_address_delete(request, id):
+    print("Entrou no delete")
+    if request.method == 'DELETE':
+        if not id:
+            return JsonResponse({'error': 'id is required'}, status=400)
+
+        try:
+            user_address = UserAddress.objects.get(pk=id)
+            user_address.delete()
+
+            return JsonResponse({'message': 'User address deleted successfully'})
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User does not exist'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
 def user_address_list(request,user_id):
     if request.method == 'GET':
         if not user_id:

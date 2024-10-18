@@ -40,6 +40,7 @@ class Announcement(models.Model):
     condition = models.CharField(max_length=30, choices=STATUS_CONDITION, default='')  # Alterado para acomodar a opção mais longa
     price = models.DecimalField(max_digits=10, decimal_places=2)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='announcements')  # Alterado related_name
+    quantity = models.IntegerField(null=True)
     question = models.ForeignKey('questions.Question', on_delete=models.CASCADE, null=True, related_name='announcement_questions')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='disable')
     created = models.DateTimeField(auto_now_add=True)

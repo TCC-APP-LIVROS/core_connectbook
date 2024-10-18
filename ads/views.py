@@ -144,6 +144,7 @@ def create_announcement(request):
         study_area = data.get('study_area')
         condition = data.get('condition')
         price = data.get('price')
+        quantity = data.get('quantity')
         product_id = data.get('product_id')
         question_id = data.get('question_id')
         status = data.get('status', 'disable')
@@ -164,6 +165,7 @@ def create_announcement(request):
                     study_area=study_area,
                     condition=condition,
                     price=price,
+                    quantity=quantity,
                     product=product,
                     question=question,
                     status=status
@@ -188,6 +190,7 @@ def edit_announcement(request, announcement_id):
         data = json.loads(request.body)
         title = data.get('title')
         price = data.get('price')
+        quantity = data.get('quantity')
         status = data.get('status')
 
         try:
@@ -198,6 +201,8 @@ def edit_announcement(request, announcement_id):
                 announcement.title = title
             if price is not None:
                 announcement.price = price
+            if quantity is not None:
+                announcement.quantity = quantity
             if status is not None:
                 announcement.status = status
 
@@ -249,6 +254,7 @@ def announcement_detail(request, announcement_id):
                 'study_area': announcement.study_area,
                 'condition': announcement.condition,
                 'price': announcement.price,
+                'quantity': announcement.quantity,
                 'product_id': announcement.product_id,
                 'question_id': announcement.question_id,
                 'status': announcement.status
@@ -294,6 +300,7 @@ def search_annoucement(request):
                     'study_area': announcements.study_area,
                     'condition': announcements.condition,
                     'price': announcements.price,
+                    'quantity': announcements.quantity,
                     'product_id': announcements.product_id,
                     'question_id': announcements.question_id,
                     'status': announcements.status

@@ -25,7 +25,6 @@ def user_login(request):
             password = data.get('password')
 
             if username and password:
-                print(username, password)
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     if user.is_active:
@@ -33,8 +32,10 @@ def user_login(request):
                         user_profile = UserProfile.objects.get(user=user)
                         response = {
                             'message': 'Authenticated successfully',
-                            'user_id': user.id,
+                            'id': user.id,
                             'profile_uuid': str(user_profile.uuid),
+                            'photo': user_profile.photo.url if user_profile.photo else None,
+                            'name': user.username,
                         }
                         return JsonResponse(response)
                     else:
@@ -149,6 +150,7 @@ def get_Address_by_cep(cep):
                 neighborhood = via_cep_data.get('bairro', '')
                 city = via_cep_data.get('localidade', '')
                 state = via_cep_data.get('uf', '')
+                street = via_cep_data.get('logradouro', '')
                 
                 # Criar o novo endereço com os dados fornecidos e preenchidos automaticamente
                 new_address = {
@@ -156,6 +158,7 @@ def get_Address_by_cep(cep):
                     'neighborhood': neighborhood,
                     'city': city,
                     'state': state,
+                    'street': street,
                 }
 
                 #Se não existe, cria o endereço no DB
@@ -163,7 +166,8 @@ def get_Address_by_cep(cep):
                         cep=new_address['cep'],
                         neighborhood=new_address['neighborhood'],
                         city=new_address['city'],
-                        state=new_address['state']
+                        state=new_address['state'],
+                        street=new_address['street']
                 )
                 return address
             else:
@@ -198,7 +202,7 @@ def user_address_register(request):
                     number=number,
                     complement=complement,
                     nickname=nickname,
-                    receiver_name=receiver_name
+                    receiver_name=receiver_name,
                 )
 
                 return JsonResponse({'message': 'User address registered successfully'})
@@ -210,7 +214,90 @@ def user_address_register(request):
             return JsonResponse({'error': 'Missing required fields'}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+@csrf_exempt
+def user_address_update(request, id):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        cep = data.get('cep')
 
+        number = data.get('number')
+        complement = data.get('complement')
+        nickname = data.get('nickname')
+        receiver_name = data.get('receiver_name')
+
+        if number and nickname and receiver_name:
+            
+            try:
+
+                # Verificar se o CEP existe no banco de dados
+                address = get_Address_by_cep(cep)
+                user_address = UserAddress.objects.get(pk=id)
+
+                user_address.number = number
+                user_address.complement = complement
+                user_address.nickname = nickname
+                user_address.receiver_name = receiver_name
+                user_address.address = address
+                
+                # Preciso dar um update no endereço
+                user_address.save()
+
+                return JsonResponse({'message': 'User address registered successfully'})
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User does not exist'}, status=400)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=400)
+        else:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def user_address_delete(request, id):
+    if request.method == 'DELETE':
+        if not id:
+            return JsonResponse({'error': 'id is required'}, status=400)
+
+        try:
+            user_address = UserAddress.objects.get(pk=id)
+            user_address.delete()
+
+            return JsonResponse({'message': 'User address deleted successfully'})
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User does not exist'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def user_address_list(request,user_id):
+    if request.method == 'GET':
+        if not user_id:
+                return JsonResponse({'error': 'user_id is required'}, status=400)
+
+        user_addresses  = UserAddress.objects.filter(user_id=user_id).values()
+
+        items_data = []
+        for item in user_addresses:
+            address = Address.objects.get(pk=item['address_id'])
+            items_data.append({
+                'id': item['id'],
+                'cep': address.cep,
+                'neighborhood': address.neighborhood,
+                'city': address.city,
+                'state': address.state,
+                'street': address.street,
+                'number': item['number'],
+                'complement': item['complement'],
+                'nickname': item['nickname'],
+                'receiver_name': item['receiver_name']
+            })
+            
+        return JsonResponse({'addresses' : items_data})
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @csrf_exempt

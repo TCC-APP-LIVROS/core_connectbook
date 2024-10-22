@@ -283,10 +283,12 @@ def list_announcement(request, page):
                 return JsonResponse({'error': 'Page is required'}, status=400)
         
         user_id = request.GET.get('user')
+        show_user = request.GET.get('show_user')
         itens_per_page = 10 # passar na req.
+        print(show_user)
 
-        if not user_id:
-            announcement = Announcement.objects.all().values()
+        if not show_user:
+            announcement = Announcement.objects.exclude(seller_id=user_id).values()
         else:
             announcement = Announcement.objects.filter(seller_id=user_id).values()
         

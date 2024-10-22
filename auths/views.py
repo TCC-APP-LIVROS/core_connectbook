@@ -255,7 +255,6 @@ def user_address_update(request, id):
 
 @csrf_exempt
 def user_address_delete(request, id):
-    print("Entrou no delete")
     if request.method == 'DELETE':
         if not id:
             return JsonResponse({'error': 'id is required'}, status=400)
@@ -295,7 +294,6 @@ def user_address_list(request,user_id):
                 'nickname': item['nickname'],
                 'receiver_name': item['receiver_name']
             })
-        print(items_data)
             
         return JsonResponse({'addresses' : items_data})
     else:

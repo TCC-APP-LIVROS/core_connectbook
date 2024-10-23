@@ -32,7 +32,7 @@ def create_product(request):
                     seller=seller
                 )
 
-                return JsonResponse({'message': 'Product created successfully'})
+                return product
             except User.DoesNotExist:
                 return JsonResponse({'error': 'Seller does not exist'}, status=400)
             except Exception as e:
@@ -147,44 +147,71 @@ def list_product(request, page):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @csrf_exempt
-def create_announcement(request):
+def create_announcement(data):
+    title = data.get('title')
+    description = data.get('description')
+    condition = data.get('condition')
+    price = data.get('price')
+    product_id = data.get('product_id')
+    seller_id = data.get('seller_id')
+    status = data.get('status', 'disable')
+
+    if title and condition and price and product_id and seller_id:
+        try:
+            # Verificar se o produto e o vendedor existem
+            product = Product.objects.get(pk=product_id)
+            seller = User.objects.get(pk=seller_id)
+
+            # Criar o anúncio
+            announcement = Announcement.objects.create(
+                title=title,
+                description=description,
+                condition=condition,
+                price=price,
+                product=product,
+                seller=seller,
+                status=status
+            )
+
+            return announcement  # Retorna o objeto de anúncio criado
+        except Product.DoesNotExist:
+            print("Product does not exist")
+            return None  # Retorna None em vez de JsonResponse
+        except User.DoesNotExist:
+            print("Seller does not exist")
+            return None
+        except Exception as e:
+            print(f"Error creating announcement: {str(e)}")
+            return None
+    else:
+        print("Missing required fields")
+        return None
+    
+@csrf_exempt
+def create_announcement_total(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        title = data.get('title')
-        description = data.get('description')
-        condition = data.get('condition')
-        price = data.get('price')
-        product_id = data.get('product_id')
-        seller = data.get('seller_id')
-        status = data.get('status', 'disable')
+        try:
+            # Criação do produto
+            product = create_product(request)
+            
+            # Dados da requisição
+            data = json.loads(request.body)
+            data['product_id'] = product.id  # Atribuir o ID do produto criado
 
-        if title and condition and price and product_id:
-            try:
-                # Verificar se o produto associado existe
-                product = Product.objects.get(pk=product_id)
-                seller = User.objects.get(pk=seller)
-
-                # Criar o anúncio
-                announcement = Announcement.objects.create(
-                    title=title,
-                    description=description,
-                    condition=condition,
-                    price=price,
-                    product=product,
-                    seller=seller,
-                    status=status
-                )
-
+            # Criação do anúncio
+            announcement = create_announcement(data)
+            
+            if product and announcement:
                 return JsonResponse({'message': 'Announcement created successfully'})
-            except Product.DoesNotExist:
-                return JsonResponse({'error': 'Product does not exist'}, status=400)
-            except Exception as e:
-                return JsonResponse({'error': str(e)}, status=400)
-        else:
-            return JsonResponse({'error': 'Missing required fields'}, status=400)
+            else:
+                return JsonResponse({'error': 'Failed to create announcement'}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
 
 @csrf_exempt
 def edit_announcement(request, announcement_id):

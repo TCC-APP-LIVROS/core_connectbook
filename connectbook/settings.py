@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'review.apps.ReviewConfig',
     'cartitem.apps.CartitemConfig',
     'cart.apps.CartConfig',
+    'orders.apps.OrdersConfig',
     'rest_framework',
     'django.contrib.postgres'
 ]

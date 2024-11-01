@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+
+from django.views.decorators.http import condition
+
 from .models import Product, Announcement
 
 @csrf_exempt
@@ -220,6 +223,7 @@ def edit_announcement(request, announcement_id):
         title = data.get('title')
         description = data.get('description')
         price = data.get('price')
+        quantity = data.get('quantity')
         status = data.get('status')
 
         try:
@@ -232,6 +236,8 @@ def edit_announcement(request, announcement_id):
                 announcement.description = description
             if price is not None:
                 announcement.price = price
+            if quantity is not None:
+                announcement.quantity = quantity
             if status is not None:
                 announcement.status = status
 
@@ -283,6 +289,7 @@ def announcement_detail(request, announcement_id):
                 'description': announcement.description,
                 'condition': announcement.condition,
                 'price': announcement.price,
+                'quantity': announcement.quantity,
                 'product': {
                     'id': announcement.product.id,
                     'name': announcement.product.name,
@@ -330,10 +337,16 @@ def search_annoucement(request):
     if request.method == 'GET':
         data = json.loads(request.body)
         title = data.get('title')
+        study_area = data.get('study_area')
+        condition = data.get('condition')
 
         try:
             if title:
                 announcements = Announcement.objects.filter(title=title)
+            if study_area:
+                announcements = Announcement.objects.filter(study_area=study_area)
+            if condition:
+                announcements = Announcement.objects.filter(condition=condition)
 
             if announcements.exists():
                 announcement_data = [{
@@ -342,12 +355,15 @@ def search_annoucement(request):
                     'study_area': announcements.study_area,
                     'condition': announcements.condition,
                     'price': announcements.price,
+                    'quantity': announcements.quantity,
                     'product_id': announcements.product_id,
                     'question_id': announcements.question_id,
                     'status': announcements.status
                 } for announcement in announcements]
 
                 return JsonResponse({'annoucement': announcement_data})
+            else:
+                return JsonResponse({'message': 'No annoucements found'}, status=404)
         except Announcement.DoesNotExist:
             return JsonResponse({'error': 'Announcement does not exist'}, status=404)
         except Exception as e:

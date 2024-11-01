@@ -155,6 +155,7 @@ def create_announcement(data):
     description = data.get('description')
     condition = data.get('condition')
     price = data.get('price')
+    quantity = data.get('quantity')
     product_id = data.get('product_id')
     seller_id = data.get('seller_id')
     status = data.get('status', 'disable')
@@ -173,7 +174,8 @@ def create_announcement(data):
                 price=price,
                 product=product,
                 seller=seller,
-                status=status
+                status=status,
+                quantity=quantity
             )
 
             return announcement  # Retorna o objeto de anúncio criado
@@ -201,7 +203,8 @@ def create_announcement_total(request):
             data = json.loads(request.body)
             data['product_id'] = product.id  # Atribuir o ID do produto criado
 
-            # Criação do anúncio
+            # Criação do anúncioprint
+            print(data)
             announcement = create_announcement(data)
             
             if product and announcement:
@@ -319,9 +322,8 @@ def list_announcement(request, page):
         user_id = request.GET.get('user')
         show_user = request.GET.get('show_user')
         itens_per_page = 10 # passar na req.
-        print(show_user)
 
-        if not show_user:
+        if str(show_user).lower() == 'false':
             announcement = Announcement.objects.exclude(seller_id=user_id).values()
         else:
             announcement = Announcement.objects.filter(seller_id=user_id).values()

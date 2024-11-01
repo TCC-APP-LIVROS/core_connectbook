@@ -14,30 +14,44 @@ def add_car(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         client_id = data.get('client_id')
-        product_ids = data.get('product_ids')
+        product_id = data.get('product_id')
+        quantity = data.get('quantity')
 
-        if client_id and product_ids:
+        if client_id and product_id:
             try:
+                # Verifica se o cliente e o produto existem
                 client = User.objects.get(pk=client_id)
+                product = Product.objects.get(pk=product_id)
 
-                cart = Cart.Objects.create(client=client)
+                # Verifica se o produto já está no carrinho
+                cart = Cart.objects.filter(client=client).first()
+                if not cart:
+                    cart = Cart.objects.create(client=client)
 
-                for product_id in product_ids:
-                    product = Product.objects.get(pk=product_id)
-                    cart.product.add(product)
+                existing_item = Itemcart.objects.filter(cart=cart, product=product).first()
+
+                if existing_item:
+                    # Atualiza a quantidade se o item já estiver no carrinho
+                    existing_item.quantity = quantity
+                    existing_item.save()
+                else:
+                    # Adiciona o novo item ao carrinho se não estiver presente
+                    cart_item = Itemcart.objects.create(cart=cart, product=product, quantity=quantity)
+                    cart_item.save()
 
                 return JsonResponse({'message': 'Added to cart'})
+
             except User.DoesNotExist:
                 return JsonResponse({'error': 'User does not exist'}, status=400)
             except Product.DoesNotExist:
                 return JsonResponse({'error': 'Product does not exist'}, status=400)
             except Exception as e:
                 return JsonResponse({'error': str(e)}, status=400)
-
         else:
             return JsonResponse({'error': 'Missing required fields'}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
 
 
 @csrf_exempt

@@ -69,31 +69,3 @@ def delete_order(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-@csrf_exempt
-def order_detail(request, user_id, seller_id):
-    if request.method == 'GET':
-        orders = Order.objects.filter(buyer=user_id, seller=seller_id).values()
-
-        page_number = request.GET.get('page', 1)
-        page_size = request.GET.get('page_size', 10)
-
-        paginator = Paginator(orders, page_size)
-
-        max_pages = 10
-        total_pages = min(paginator.num_pages, max_pages)
-
-        try:
-            page_obj = paginator.page(page_number)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
-
-        response_data = {
-            'total_pages': total_pages,
-            'current_page': page_obj.number,
-            'orders': list(page_obj.object_list)
-        }
-
-        return JsonResponse(response_data, safe=False)
-
-    else:
-        return JsonResponse({'error': 'Method not allowed'}, status=405)

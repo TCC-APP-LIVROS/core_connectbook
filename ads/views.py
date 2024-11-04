@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.paginator import Paginator
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,14 +8,14 @@ import json
 from django.views.decorators.http import condition
 
 from .models import Product, Announcement
-from questions.models import Question
 
 @csrf_exempt
 def create_product(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         name = data.get('name')
-        description = data.get('description')
+        study_area = data.get('study_area')
+        published_at = data.get('published_at')
         author = data.get('author')
         image = request.FILES.get('image')
         seller_id = data.get('seller_id')  # Supondo que o ID do vendedor seja enviado no corpo da requisição
@@ -27,13 +28,14 @@ def create_product(request):
                 # Criar o produto
                 product = Product.objects.create(
                     name=name,
-                    description=description,
+                    study_area=study_area,
+                    published_at=published_at,
                     author=author,
                     image=image,
                     seller=seller
                 )
 
-                return JsonResponse({'message': 'Product created successfully'})
+                return product
             except User.DoesNotExist:
                 return JsonResponse({'error': 'Seller does not exist'}, status=400)
             except Exception as e:
@@ -50,7 +52,8 @@ def edit_product(request):
         data = json.loads(request.body)
         product_id = data.get('product_id')
         name = data.get('name')
-        description = data.get('description')
+        study_area = data.get('study_area')
+        published_at = data.get('published_at')
         author = data.get('author')
         image = request.FILES.get('image')
 
@@ -62,8 +65,10 @@ def edit_product(request):
 
             if name is not None:
                 product.name = name
-            if description is not None:
-                product.description = description
+            if study_area is not None:
+                product.study_area = study_area
+            if published_at is not None:
+                product.published_at = published_at
             if author is not None:
                 product.author = author
             if image is not None:
@@ -114,7 +119,8 @@ def product_detail(request, product_id):
             product_data = {
                 'id': product.id,
                 'name': product.name,
-                'description': product.description,
+                'study_area': product.study_area,
+                'published_at': product.published_at,
                 'author': product.author,
                 'image': product.image.url if product.image else None,
             }
@@ -129,66 +135,96 @@ def product_detail(request, product_id):
 
 
 @csrf_exempt
-def list_product(request):
+def list_product(request, page):
     if request.method == 'GET':
+
+        if not page:
+                return JsonResponse({'error': 'Page is required'}, status=400)
+
         product = Product.objects.all().values()
-        return JsonResponse(list(product), safe=False)
+        itens_per_page = 10
+        paginator = Paginator(product, itens_per_page)
+
+        return JsonResponse(list(paginator.get_page(page)), safe=False)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @csrf_exempt
-def create_announcement(request):
+def create_announcement(data):
+    title = data.get('title')
+    description = data.get('description')
+    condition = data.get('condition')
+    price = data.get('price')
+    quantity = data.get('quantity')
+    product_id = data.get('product_id')
+    seller_id = data.get('seller_id')
+    status = data.get('status', 'disable')
+
+    if title and condition and price and product_id and seller_id:
+        try:
+            # Verificar se o produto e o vendedor existem
+            product = Product.objects.get(pk=product_id)
+            seller = User.objects.get(pk=seller_id)
+
+            # Criar o anúncio
+            announcement = Announcement.objects.create(
+                title=title,
+                description=description,
+                condition=condition,
+                price=price,
+                product=product,
+                seller=seller,
+                status=status,
+                quantity=quantity
+            )
+
+            return announcement  # Retorna o objeto de anúncio criado
+        except Product.DoesNotExist:
+            print("Product does not exist")
+            return None  # Retorna None em vez de JsonResponse
+        except User.DoesNotExist:
+            print("Seller does not exist")
+            return None
+        except Exception as e:
+            print(f"Error creating announcement: {str(e)}")
+            return None
+    else:
+        print("Missing required fields")
+        return None
+    
+@csrf_exempt
+def create_announcement_total(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        title = data.get('title')
-        study_area = data.get('study_area')
-        condition = data.get('condition')
-        price = data.get('price')
-        quantity = data.get('quantity')
-        product_id = data.get('product_id')
-        question_id = data.get('question_id')
-        status = data.get('status', 'disable')
+        try:
+            # Criação do produto
+            product = create_product(request)
+            
+            # Dados da requisição
+            data = json.loads(request.body)
+            data['product_id'] = product.id  # Atribuir o ID do produto criado
 
-        if title and study_area and condition and price and product_id:
-            try:
-                # Verificar se o produto associado existe
-                product = Product.objects.get(pk=product_id)
-
-                # Verificar se a questão associada existe, se houver
-                question = None
-                if question_id:
-                    question = Question.objects.get(pk=question_id)
-
-                # Criar o anúncio
-                announcement = Announcement.objects.create(
-                    title=title,
-                    study_area=study_area,
-                    condition=condition,
-                    price=price,
-                    quantity=quantity,
-                    product=product,
-                    question=question,
-                    status=status
-                )
-
+            # Criação do anúncioprint
+            print(data)
+            announcement = create_announcement(data)
+            
+            if product and announcement:
                 return JsonResponse({'message': 'Announcement created successfully'})
-            except Product.DoesNotExist:
-                return JsonResponse({'error': 'Product does not exist'}, status=400)
-            except Question.DoesNotExist:
-                return JsonResponse({'error': 'Question does not exist'}, status=400)
-            except Exception as e:
-                return JsonResponse({'error': str(e)}, status=400)
-        else:
-            return JsonResponse({'error': 'Missing required fields'}, status=400)
+            else:
+                return JsonResponse({'error': 'Failed to create announcement'}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
 
 @csrf_exempt
 def edit_announcement(request, announcement_id):
     if request.method == 'PUT':
         data = json.loads(request.body)
         title = data.get('title')
+        description = data.get('description')
         price = data.get('price')
         quantity = data.get('quantity')
         status = data.get('status')
@@ -199,6 +235,8 @@ def edit_announcement(request, announcement_id):
             # Atualizar os campos, se fornecidos
             if title is not None:
                 announcement.title = title
+            if description is not None:
+                announcement.description = description
             if price is not None:
                 announcement.price = price
             if quantity is not None:
@@ -246,17 +284,23 @@ def announcement_detail(request, announcement_id):
             if not announcement_id:
                 return JsonResponse({'error': 'Announcement ID is required'}, status=400)
 
-            announcement = Product.objects.get(pk=announcement_id)
-
+            announcement = Announcement.objects.get(pk=announcement_id)
+            print(announcement)
             announcement_data = {
                 'id': announcement_id,
                 'title': announcement.title,
-                'study_area': announcement.study_area,
+                'description': announcement.description,
                 'condition': announcement.condition,
                 'price': announcement.price,
                 'quantity': announcement.quantity,
-                'product_id': announcement.product_id,
-                'question_id': announcement.question_id,
+                'product': {
+                    'id': announcement.product.id,
+                    'name': announcement.product.name,
+                    'study_area': announcement.product.study_area,
+                    'published_at': announcement.product.published_at,
+                    'author': announcement.product.author,
+                    'image': announcement.product.image.url if announcement.product.image else None,
+                },
                 'status': announcement.status
             }
 
@@ -270,10 +314,23 @@ def announcement_detail(request, announcement_id):
 
 
 @csrf_exempt
-def list_announcement(request):
+def list_announcement(request, page):
     if request.method == 'GET':
-        announcement = Announcement.objects.all().values()
-        return JsonResponse(list(announcement), safe=False)
+        if not page:
+                return JsonResponse({'error': 'Page is required'}, status=400)
+        
+        user_id = request.GET.get('user')
+        show_user = request.GET.get('show_user')
+        itens_per_page = 10 # passar na req.
+
+        if str(show_user).lower() == 'false':
+            announcement = Announcement.objects.exclude(seller_id=user_id).values()
+        else:
+            announcement = Announcement.objects.filter(seller_id=user_id).values()
+        
+        paginator = Paginator(announcement, itens_per_page)
+        
+        return JsonResponse(list(paginator.get_page(page)), safe=False)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
@@ -315,3 +372,28 @@ def search_annoucement(request):
             return JsonResponse({'error': str(e)}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def announcement_toggle_status(request, announcement_id):
+    if request.method == 'PUT':
+        try:
+            if not announcement_id:
+                return JsonResponse({'error': 'Announcement ID is required'}, status=400)
+
+            announcement = Announcement.objects.get(pk=announcement_id)
+            
+            if announcement.status == 'disabled':
+                announcement.status = 'activated'
+            else:
+                announcement.status = 'disabled'
+            
+            announcement.save()
+
+            return JsonResponse({'message': 'Announcement {announcement.status} successfully'})
+        except Announcement.DoesNotExist:
+            return JsonResponse({'error': 'Announcement does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+

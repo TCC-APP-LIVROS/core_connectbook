@@ -1,12 +1,17 @@
 from django.db import models
-from cartitem.models import Itemcart
 from ads.models import Announcement
+from django.contrib.auth.models import User
+
+from auths.models import UserAddress 
 
 class Order(models.Model):
-    item_cart = models.ForeignKey(Itemcart, on_delete=models.CASCADE)
+    buyer = models.ForeignKey(User, related_name='user_buyer', on_delete=models.CASCADE)
+    seller = models.ForeignKey(User, related_name='user_seller', on_delete=models.CASCADE)
     announcement = models.ForeignKey(Announcement, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_created=True)
+    address = models.ForeignKey(UserAddress, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default='PENDING')
+    quantity = models.IntegerField(default=1)
 
     def __str__(self):
         return f'Order #{self.id} - {self.status}'

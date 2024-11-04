@@ -3,8 +3,11 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from ads.models import Announcement
+from auths.models import UserAddress
 from orders.models import Order
 from cartitem.models import Itemcart
+from django.contrib.auth.models import User
 
 
 
@@ -12,16 +15,24 @@ from cartitem.models import Itemcart
 def create_order(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        item_cart = data.get('item_cart')
         announcement = data.get('announcement')
+        buyer = data.get('buyer')
+        quantity = data.get('quantity')
+        address = data.get('address')
 
-        if item_cart:
+        if announcement and buyer and quantity:
             try:
-                item = Itemcart.objects.get(pk=item_cart)
+                buyer = User.objects.get(pk=buyer)
+                announcement = Announcement.objects.get(pk=announcement)
+                address = UserAddress.objects.get(pk=address)
 
                 order = Order.objects.create(
-                    item_cart = item,
-                    announcement = announcement
+                    buyer=buyer,
+                    seller=announcement.seller,
+                    announcement=announcement,
+                    status='PENDING',
+                    quantity=quantity,
+                    address=address
                 )
 
                 return JsonResponse({'message': 'Order Create'})
@@ -59,9 +70,9 @@ def delete_order(request):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @csrf_exempt
-def order_detail(request):
+def order_detail(request, user_id, seller_id):
     if request.method == 'GET':
-        orders = Order.objects.all().values()
+        orders = Order.objects.filter(buyer=user_id, seller=seller_id).values()
 
         page_number = request.GET.get('page', 1)
         page_size = request.GET.get('page_size', 10)

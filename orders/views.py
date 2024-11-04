@@ -10,7 +10,6 @@ from cartitem.models import Itemcart
 from django.contrib.auth.models import User
 
 
-
 @csrf_exempt
 def create_order(request):
     if request.method == 'POST':

@@ -96,3 +96,4 @@ def order_detail(request, user_id, seller_id):
 
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+

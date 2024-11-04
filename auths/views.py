@@ -25,7 +25,6 @@ def user_login(request):
             password = data.get('password')
 
             if username and password:
-                print(username, password)
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     if user.is_active:
@@ -33,8 +32,10 @@ def user_login(request):
                         user_profile = UserProfile.objects.get(user=user)
                         response = {
                             'message': 'Authenticated successfully',
-                            'user_id': user.id,
+                            'id': user.id,
                             'profile_uuid': str(user_profile.uuid),
+                            'photo': user_profile.photo.url if user_profile.photo else None,
+                            'name': user.username,
                         }
                         return JsonResponse(response)
                     else:
@@ -46,7 +47,6 @@ def user_login(request):
                 return JsonResponse({f'error': f'Missing username {username} or password {password}'}, status=400)
         else:
             return JsonResponse({'error': 'Method not allowed'}, status=405)
-
 
 @csrf_exempt
 def profile_register(request):
@@ -88,24 +88,11 @@ def address_register(request):
         data = json.loads(request.body)
         cep = data.get('cep')
 
-        # Verificar se os campos essenciais estão presentes no payload
-        if 'public_place' in data:
-            public_place = data.get('public_place')
-        else:
-            return JsonResponse({'error': 'Missing public_place field'}, status=400)
-
-        if 'public_place_type' in data:
-            public_place_type = data.get('public_place_type')
-        else:
-            public_place_type = 'default_type'
-
         if Address.objects.filter(cep=cep).exists():
             address_existing = Address.objects.get(cep=cep)
             address_data = {
                 'cep': address_existing.cep,
                 'neighborhood': address_existing.neighborhood,
-                'public_place': public_place,
-                'public_place_type': public_place_type,
                 'city': address_existing.city,
                 'state': address_existing.state
             }
@@ -113,8 +100,6 @@ def address_register(request):
             add_address = Address.objects.create(
                 cep=cep,
                 neighborhood=address_existing.neighborhood,
-                public_place=public_place,
-                public_place_type=public_place_type,
                 city=address_existing.city,
                 state=address_existing.state
             )
@@ -136,8 +121,6 @@ def address_register(request):
                         new_address = Address.objects.create(
                             cep=cep,
                             neighborhood=neighborhood,
-                            public_place=public_place,
-                            public_place_type=public_place_type,
                             city=city,
                             state=state
                         )
@@ -151,6 +134,47 @@ def address_register(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+def get_Address_by_cep(cep):
+    try:
+        address_db = Address.objects.filter(cep=cep)
+        if address_db.exists():
+            return address_db.first()
+        else:
+            # Consultar a API ViaCEP para obter detalhes do endereço
+            via_cep_url = f'https://viacep.com.br/ws/{cep}/json/'
+            response = requests.get(via_cep_url)
+            if response.status_code == 200:
+                via_cep_data = response.json()
+
+                # Preencher automaticamente os campos de bairro, cidade e estado
+                neighborhood = via_cep_data.get('bairro', '')
+                city = via_cep_data.get('localidade', '')
+                state = via_cep_data.get('uf', '')
+                street = via_cep_data.get('logradouro', '')
+                
+                # Criar o novo endereço com os dados fornecidos e preenchidos automaticamente
+                new_address = {
+                    'cep': cep,
+                    'neighborhood': neighborhood,
+                    'city': city,
+                    'state': state,
+                    'street': street,
+                }
+
+                #Se não existe, cria o endereço no DB
+                address = Address.objects.create(
+                        cep=new_address['cep'],
+                        neighborhood=new_address['neighborhood'],
+                        city=new_address['city'],
+                        state=new_address['state'],
+                        street=new_address['street']
+                )
+                return address
+            else:
+                return JsonResponse({'error': 'Failed to fetch address details from ViaCEP'}, status=400)
+    except Exception as e:
+                    print(e)
+                    return JsonResponse({'error': str(e)}, status=400)
 
 @csrf_exempt
 def user_address_register(request):
@@ -161,6 +185,7 @@ def user_address_register(request):
         number = address_data.get('number')
         complement = address_data.get('complement')
         nickname = address_data.get('nickname')
+        receiver_name = address_data.get('receiver_name')
 
         if user_id and address_data and complement and nickname:
             try:
@@ -168,25 +193,16 @@ def user_address_register(request):
 
                 # Verificar se o CEP existe no banco de dados
                 cep = address_data.get('cep')
-                address = Address.objects.filter(cep=cep).first()
-                if address is None:
-                    # Caso o CEP não exista, criar o endereço do usuário
-                    address = Address.objects.create(
-                        cep=cep,
-                        public_place=address_data.get('public_place'),
-                        public_place_type=address_data.get('public_place_type'),
-                        neighborhood='',  # Este campo será preenchido automaticamente com base no CEP
-                        city='',           # Este campo será preenchido automaticamente com base no CEP
-                        state=''           # Este campo será preenchido automaticamente com base no CEP
-                    )
-
+                address = get_Address_by_cep(cep)
+                
                 # Vincular o endereço ao usuário
-                user_address = UserAddress.objects.create(
+                UserAddress.objects.create(
                     user=user,
                     address=address,
                     number=number,
                     complement=complement,
-                    nickname=nickname
+                    nickname=nickname,
+                    receiver_name=receiver_name,
                 )
 
                 return JsonResponse({'message': 'User address registered successfully'})
@@ -198,7 +214,90 @@ def user_address_register(request):
             return JsonResponse({'error': 'Missing required fields'}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+@csrf_exempt
+def user_address_update(request, id):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        cep = data.get('cep')
 
+        number = data.get('number')
+        complement = data.get('complement')
+        nickname = data.get('nickname')
+        receiver_name = data.get('receiver_name')
+
+        if number and nickname and receiver_name:
+            
+            try:
+
+                # Verificar se o CEP existe no banco de dados
+                address = get_Address_by_cep(cep)
+                user_address = UserAddress.objects.get(pk=id)
+
+                user_address.number = number
+                user_address.complement = complement
+                user_address.nickname = nickname
+                user_address.receiver_name = receiver_name
+                user_address.address = address
+                
+                # Preciso dar um update no endereço
+                user_address.save()
+
+                return JsonResponse({'message': 'User address registered successfully'})
+            except User.DoesNotExist:
+                return JsonResponse({'error': 'User does not exist'}, status=400)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=400)
+        else:
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def user_address_delete(request, id):
+    if request.method == 'DELETE':
+        if not id:
+            return JsonResponse({'error': 'id is required'}, status=400)
+
+        try:
+            user_address = UserAddress.objects.get(pk=id)
+            user_address.delete()
+
+            return JsonResponse({'message': 'User address deleted successfully'})
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User does not exist'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def user_address_list(request,user_id):
+    if request.method == 'GET':
+        if not user_id:
+                return JsonResponse({'error': 'user_id is required'}, status=400)
+
+        user_addresses  = UserAddress.objects.filter(user_id=user_id).values()
+
+        items_data = []
+        for item in user_addresses:
+            address = Address.objects.get(pk=item['address_id'])
+            items_data.append({
+                'id': item['id'],
+                'cep': address.cep,
+                'neighborhood': address.neighborhood,
+                'city': address.city,
+                'state': address.state,
+                'street': address.street,
+                'number': item['number'],
+                'complement': item['complement'],
+                'nickname': item['nickname'],
+                'receiver_name': item['receiver_name']
+            })
+            
+        return JsonResponse({'addresses' : items_data})
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @csrf_exempt
@@ -268,8 +367,3 @@ def list_auths(request):
         return JsonResponse(list(user), safe=False)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-
-
-
-

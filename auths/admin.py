@@ -13,7 +13,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-     list_display = ['cep', 'public_place', 'public_place_type', 'neighborhood', 'city', 'state']
+     list_display = ['cep', 'neighborhood', 'city', 'state']
 
 
 @admin.register(UserAddress)

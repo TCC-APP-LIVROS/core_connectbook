@@ -11,6 +11,7 @@ from ads.models import Announcement
 def add_item_cart(request):
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
         client_id = data.get('client_id')
         announcement_id = data.get('announcement_id')
         quantity = data.get('quantity', 1)

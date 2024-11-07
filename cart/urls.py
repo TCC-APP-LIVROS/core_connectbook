@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import car_detail, delete_cart
+from .views import add_car, edit_car, car_detail
 
 urlpatterns = [
     path('add/', add_car, name='add_car'),

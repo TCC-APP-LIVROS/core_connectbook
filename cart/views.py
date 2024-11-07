@@ -1,4 +1,6 @@
+from itertools import product
 from django.shortcuts import render
+from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -118,25 +120,3 @@ def car_detail(request, cart_id):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-
-@csrf_exempt
-def delete_cart(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        client_id = data.get('client_id')
-
-        if client_id:
-            try:
-                cart = Cart.objects.get(client=client_id)
-
-                cart.itemcart_set.all().delete()
-
-                return JsonResponse({'message': 'Cart successfully cleaned'})
-            except Cart.DoesNotExist:
-                return JsonResponse({'error': 'Carrinho não encontrado'}, status=404)
-            except Exception as e:
-                return JsonResponse({'error': str(e)}, status=400)
-        else:
-            return JsonResponse({'error': 'User not found'}, status=404)
-    else:
-        return JsonResponse({'error': 'Cart not found'}, status=405)

@@ -4,10 +4,11 @@ from django.db import models
 
 class Product(models.Model):
     name = models.CharField(max_length=200, db_index=True)
-    description = models.TextField(blank=True)
     author = models.CharField(max_length=200, db_index=True)
+    study_area = models.CharField(max_length=200, db_index=True, blank=True)
+    published_at = models.SmallIntegerField(null=True)
     image = models.ImageField(upload_to='book/%Y/%m/%d', blank=True)
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales_user')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales_user_product')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -36,12 +37,13 @@ class Announcement(models.Model):
     )
 
     title = models.CharField(max_length=200, db_index=True)
-    study_area = models.CharField(max_length=200, db_index=True)
+    description = models.TextField(blank=True)
     condition = models.CharField(max_length=30, choices=STATUS_CONDITION, default='')  # Alterado para acomodar a opção mais longa
     price = models.DecimalField(max_digits=10, decimal_places=2)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='announcements')  # Alterado related_name
     quantity = models.IntegerField(null=True)
     question = models.ForeignKey('questions.Question', on_delete=models.CASCADE, null=True, related_name='announcement_questions')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales_user_ads')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='disable')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

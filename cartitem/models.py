@@ -4,7 +4,7 @@ from django.db import models
 
 class Itemcart(models.Model):
     cart = models.ForeignKey('cart.Cart', on_delete=models.CASCADE)
-    announcement = models.ForeignKey('ads.Announcement', on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey('ads.Product', on_delete=models.CASCADE, related_name='product_item')
     quantity = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default=None)
 
     class Meta:

@@ -21,11 +21,12 @@ def user_login(request):
         print("Payload de entrada:", request.body.decode('utf-8'))
         if request.body:
             data = json.loads(request.body)
-            username = data.get('username')
+            email = data.get('email')
             password = data.get('password')
 
-            if username and password:
-                user = authenticate(request, username=username, password=password)
+            if email and password:
+                print(email, password)
+                user = authenticate(request, username=email, password=password)
                 if user is not None:
                     if user.is_active:
                         login(request, user)
@@ -43,8 +44,8 @@ def user_login(request):
                 else:
                     return JsonResponse({'error': 'Invalid login'}, status=401)
             else:
-                print(username, password)
-                return JsonResponse({f'error': f'Missing username {username} or password {password}'}, status=400)
+                print(email, password)
+                return JsonResponse({f'error': f'Missing username {email} or password {password}'}, status=400)
         else:
             return JsonResponse({'error': 'Method not allowed'}, status=405)
 

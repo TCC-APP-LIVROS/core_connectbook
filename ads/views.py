@@ -467,13 +467,14 @@ def UploadImageView(image):
             # Upload da imagem para o S3
             s3.upload_fileobj(
                 image,
-                '',
+                'bucketnanem',
                 s3_filename,
                 ExtraArgs={'ACL':'public-read'}
             )
 
             # URL público da imagem no S3
             image_url = f"https://.s3.sa-east-1.amazonaws.com/{s3_filename}"
+
             print(image_url)
 
             return image_url

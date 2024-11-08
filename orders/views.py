@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from ads.models import Announcement
+from ads.models import Announcement, Product
 from auths.models import Address, UserAddress
 from orders.models import Order
 from cartitem.models import Itemcart
@@ -90,7 +90,9 @@ def order_list(request, user_id, mode):
         for order in orders:
             try:
                 announcement = Announcement.objects.filter(id=order['announcement_id']).values().first()
+                product = Product.objects.filter(id=announcement['product_id']).values().first()
                 order['announcement'] = announcement  # Now a dictionary
+                order['product'] = product  # Now a dictionary
             except Announcement.DoesNotExist:
                 order['announcement'] = None  # Handle case where announcement doesn't exist
 

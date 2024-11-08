@@ -12,6 +12,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import requests
+
+from ads.views import UploadImageView
 from .models import UserProfile, Address, UserAddress
 
 
@@ -34,7 +36,7 @@ def user_login(request):
                             'message': 'Authenticated successfully',
                             'id': user.id,
                             'profile_uuid': str(user_profile.uuid),
-                            'photo': user_profile.photo.url if user_profile.photo else None,
+                            'photo': user_profile.photo,
                             'name': user.username,
                         }
                         return JsonResponse(response)
@@ -51,30 +53,30 @@ def user_login(request):
 @csrf_exempt
 def profile_register(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        username = data.get('username')
-        last_name = data.get('last_name')
-        password = data.get('password')
-        email = data.get('email')
-        phone = data.get('phone')
+        # Verifique se os dados estão em request.POST e os arquivos em request.FILES
+        username = request.POST.get('username')
+        last_name = request.POST.get('last_name')
+        password = request.POST.get('password')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
         photo = request.FILES.get('photo')
 
-        # Verificar se o nome de usuário já existe
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({'error': 'Username already exists'}, status=400)
-
-        # Verificar se o e-mail já está cadastrado
-        # if UserProfile.objects.filter(email=email).exists():
-        #     return JsonResponse({'error': 'Email already registered'}, status=400)
-
+        # Verifique se todos os campos obrigatórios estão presentes
         if username and password and email and phone:
+            # Verifique se o nome de usuário já existe
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'error': 'Username already exists'}, status=400)
+
+            # Crie o usuário e o perfil associado
             try:
-                # Create user with username, email, and password
+                image = UploadImageView(photo)
+                print(image)
+
                 user = User.objects.create_user(username=username, last_name=last_name, email=email, password=password)
-                # Create profile
-                profile = UserProfile.objects.create(user=user, email=email, phone=phone, photo=photo)
+                profile = UserProfile.objects.create(user=user, email=email, phone=phone, photo=image)
                 return JsonResponse({'message': 'User and profile registered successfully'})
             except Exception as e:
+                print(e)
                 return JsonResponse({'error': str(e)}, status=400)
         else:
             return JsonResponse({'error': 'Missing required fields'}, status=400)
@@ -187,12 +189,13 @@ def user_address_register(request):
         nickname = address_data.get('nickname')
         receiver_name = address_data.get('receiver_name')
 
-        if user_id and address_data and complement and nickname:
+        if user_id and address_data and nickname:
             try:
                 user = User.objects.get(pk=user_id)
 
                 # Verificar se o CEP existe no banco de dados
                 cep = address_data.get('cep')
+                print(cep)
                 address = get_Address_by_cep(cep)
                 
                 # Vincular o endereço ao usuário

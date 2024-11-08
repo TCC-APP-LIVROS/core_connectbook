@@ -168,9 +168,3 @@ AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailAuthBackend',
 
 ]
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'accounts.backends.EmailAuthBackend',
-
-]

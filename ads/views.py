@@ -473,7 +473,7 @@ def UploadImageView(image):
             )
 
             # URL público da imagem no S3
-            image_url = f"/{s3_filename}"
+            image_url = f"https://.s3.sa-east-1.amazonaws.com/{s3_filename}"
             print(image_url)
 
             return image_url

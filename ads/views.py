@@ -455,8 +455,8 @@ def UploadImageView(image):
         # Inicializa o cliente S3 usando boto3
         s3 = boto3.client(
             "s3",
-            aws_access_key_id='AKIA5FTZAC6YAD4T7NHX',
-            aws_secret_access_key='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',
+            aws_access_key_id='',
+            aws_secret_access_key='',
             region_name='sa-east-1',
         )
 
@@ -467,13 +467,14 @@ def UploadImageView(image):
             # Upload da imagem para o S3
             s3.upload_fileobj(
                 image,
-                'lucaslinardbucketteste',
+                'bucketnanem',
                 s3_filename,
                 ExtraArgs={'ACL':'public-read'}
             )
 
             # URL público da imagem no S3
-            image_url = f"https://lucaslinardbucketteste.s3.sa-east-1.amazonaws.com/{s3_filename}"
+            image_url = f"https://.s3.sa-east-1.amazonaws.com/{s3_filename}"
+
             print(image_url)
 
             return image_url
@@ -488,13 +489,13 @@ def deleteImage(imageUri):
         # Inicializa o cliente S3 usando boto3
         s3 = boto3.client(
             "s3",
-            aws_access_key_id='AKIA5FTZAC6YAD4T7NHX',
-            aws_secret_access_key='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',
+            aws_access_key_id='',
+            aws_secret_access_key='',
             region_name='sa-east-1',
         )
 
         try:
-            s3.delete_object(Bucket='lucaslinardbucketteste', Key="uploads/" + extract_after_uploads(imageUri))
+            s3.delete_object(Bucket='', Key="uploads/" + extract_after_uploads(imageUri))
 
             return True
 

@@ -91,13 +91,15 @@ def delete_item_cart(request):
 
 
 @csrf_exempt
-def item_cart_detail(request, item_cart_id):
+def item_cart_detail(request, id):
     if request.method == 'GET':
         try:
-            if not item_cart_id:
+            if not id:
                 return JsonResponse({'error': 'Item Cart ID is required'}, status=400)
 
-            item_cart = Itemcart.objects.get(pk=item_cart_id)
+            cart = Cart.objects.get(client_id=id)
+            print(cart)
+            item_cart = Itemcart.objects.get(cart=cart.id)
 
             item_cart_data = {
                 'cart': item_cart.client,

@@ -84,23 +84,31 @@ def car_detail(request, cart_id):
         try:
             if not cart_id:
                 return JsonResponse({'error': 'Cart ID is required'}, status=400)
+            
+            print(cart_id)
+            
+            # Get the Cart object directly without using .values()
+            cart = Cart.objects.get(client_id=cart_id)
+            print(cart)
 
-            cart = Cart.objects.get(pk=cart_id)
-
-            items = Itemcart.objects.filter(cart=cart)
+            # Get the items related to this cart
+            items = Itemcart.objects.filter(cart_id=cart.id)
             items_data = []
 
             for item in items:
-                product = item.product
+                product = Product.objects.get(pk=item.product_id)
                 announcement = Announcement.objects.get(product=product)
                 items_data.append({
+                    'announcemente_id': announcement.id,
                     'title': product.name,
                     'price': announcement.price,
                     'quantity': item.quantity,
+                    'max_quantity': announcement.quantity,
+                    'image': product.image
                 })
 
+            # Create the response data
             cart_data = {
-                'client': cart.client,
                 'items': items_data
             }
 
@@ -108,6 +116,7 @@ def car_detail(request, cart_id):
         except Cart.DoesNotExist:
             return JsonResponse({'error': 'Cart does not exist'}, status=404)
         except Exception as e:
+            print(e)
             return JsonResponse({'error': str(e)}, status=400)
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -7,7 +7,7 @@ class Product(models.Model):
     author = models.CharField(max_length=200, db_index=True)
     study_area = models.CharField(max_length=200, db_index=True, blank=True)
     published_at = models.SmallIntegerField(null=True)
-    image = models.ImageField(upload_to='book/%Y/%m/%d', blank=True)
+    image = models.CharField(max_length=250)
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales_user_product')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -44,7 +44,7 @@ class Announcement(models.Model):
     quantity = models.IntegerField(null=True)
     question = models.ForeignKey('questions.Question', on_delete=models.CASCADE, null=True, related_name='announcement_questions')
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sales_user_ads')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='disable')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='activated')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

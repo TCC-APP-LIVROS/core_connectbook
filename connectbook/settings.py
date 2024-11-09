@@ -165,6 +165,5 @@ AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")  # Defina a re
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'accounts.backends.EmailAuthBackend',
-
+    'auths.authentication.EmailAuthBackend',
 ]

@@ -3,8 +3,8 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-from ads.models import Announcement
-from auths.models import UserAddress
+from ads.models import Announcement, Product
+from auths.models import Address, UserAddress
 from orders.models import Order
 from cartitem.models import Itemcart
 from django.contrib.auth.models import User
@@ -68,11 +68,16 @@ def delete_order(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+# ADICIONAR QUERY STRING. QUERO FILTRAR POR COMPRADOR OU VENDEDOR
 @csrf_exempt
-def order_detail(request, user_id, seller_id):
+def order_list(request, user_id, mode):
     if request.method == 'GET':
-        orders = Order.objects.filter(buyer=user_id, seller=seller_id).values()
 
+        if mode == "seller":
+            orders = Order.objects.filter(seller_id=user_id).values()
+        else:
+            orders = Order.objects.filter(buyer_id=user_id).values()
+        
         page_number = request.GET.get('page', 1)
         page_size = request.GET.get('page_size', 10)
 
@@ -80,6 +85,16 @@ def order_detail(request, user_id, seller_id):
 
         max_pages = 10
         total_pages = min(paginator.num_pages, max_pages)
+
+        # for loop for every order
+        for order in orders:
+            try:
+                announcement = Announcement.objects.filter(id=order['announcement_id']).values().first()
+                product = Product.objects.filter(id=announcement['product_id']).values().first()
+                order['announcement'] = announcement  # Now a dictionary
+                order['product'] = product  # Now a dictionary
+            except Announcement.DoesNotExist:
+                order['announcement'] = None  # Handle case where announcement doesn't exist
 
         try:
             page_obj = paginator.page(page_number)
@@ -93,6 +108,59 @@ def order_detail(request, user_id, seller_id):
         }
 
         return JsonResponse(response_data, safe=False)
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+@csrf_exempt
+def order_details(request, order_id, mode):
+    if request.method == 'GET':
+        print(order_id)
+        order = Order.objects.filter(id=order_id).values().first()
+
+        if order is None:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+
+        if mode == "seller":
+            user = User.objects.filter(pk=order['seller_id']).values().first()
+        else:
+            user = User.objects.filter(pk=order['buyer_id']).values().first()
+
+        user_address = UserAddress.objects.filter(pk=order['address_id']).values().first()
+        address = Address.objects.filter(pk=user_address['address_id']).values().first()
+
+        if user is None:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        user['password'] = '********'
+        response_data = {
+            'user': user,
+            'order': order,
+            'address': {
+                'number': user_address['number'],
+                'complement': user_address['complement'],
+                'nickname': user_address['nickname'],
+                'receiver_name': user_address['receiver_name'],
+                'cep': address['cep'],
+                'neighborhood': address['neighborhood'],
+                'city': address['city'],
+                'state': address['state'],
+                'street': address['street'],
+            }
+        }
+
+        return JsonResponse(response_data, safe=False)
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def order_cancel(request, order_id, mode):
+    if request.method == 'DELETE':
+        order = Order.objects.get(pk=order_id)
+        order.status = 'CANCELLED'
+        order.save()
+    
+        return JsonResponse({'message': "OK"}, safe=False)
 
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)

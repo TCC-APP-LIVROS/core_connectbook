@@ -20,7 +20,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20)
     photo = models.ImageField(upload_to='profile_photos', blank=True, null=True)
-    email = models.EmailField(max_length=250, default="user@example.com")
+    email = models.EmailField(max_length=250, default="user@example.com", unique=True)
     address = models.ForeignKey('UserAddress', on_delete=models.CASCADE, null=True, related_name='address_userprofile')
 
     def __str__(self):
